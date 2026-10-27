@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>NMS – Transport universitaire Béjaïa</title>
+  <style>
+    :root {
+      --bg: #f4f6f2;
+      --card: #fff;
+      --ink: #17261f;
+      --mute: #5d6b63;
+      --line: #dfe4dc;
+      --map: #e9eee6;
+      --road: #d2d9cf;
+      --ok: #0e7c4a;
+      --late: #b86e00;
+      --bad: #c8372d;
+      --bus: #f2b400;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px)
+    }
+
+    @media (prefers-color-scheme:dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #101a15;
+        --card: #18251e;
+        --ink: #e8efe9;
+        --mute: #9aaba1;
+        --line: #2a3a31;
+        --map: #16231c;
+        --road: #26362d;
+        --ok: #3ccf8a;
+        --late: #f0a830;
+        --bad: #ff6b5e
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #101a15;
+      --card: #18251e;
+      --ink: #e8efe9;
+      --mute: #9aaba1;
+      --line: #2a3a31;
+      --map: #16231c;
+      --road: #26362d;
+      --ok: #3ccf8a;
+      --late: #f0a830;
+      --bad: #ff6b5e
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0
+    }
+
+    html {
+      scroll-padding-top: env(safe-area-inset-top, 0px)
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.4 "Segoe UI", Tahoma, system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      max-width: 600px;
+      margin: 0 auto
+    }
+
+    header {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    h1 {
+      margin: 0;
+      font: 800 22px/1 "Bahnschrift", "Arial Narrow", system-ui, sans-serif
+    }
+
+    header small {
+      color: var(--mute);
+      flex: 1;
+      font-size: 12px
+    }
+
+    .lg button {
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      padding: 4px 8px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer
+    }
+
+    .lg button[aria-pressed=true] {
+      background: var(--ink);
+      color: var(--bg)
+    }
+
+    main {
+      flex: 1;
+      overflow: auto;
+      padding: 0 16px 12px
+    }
+
+    .sub {
+      color: var(--mute);
+      font-size: 13px
+    }
+
+    .seg {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap
+    }
+
+    .chip,
+    .btn {
+      border: 1.5px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer
+    }
+
+    .chip[aria-pressed=true] {
+      background: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink)
+    }
+
+    .btn.p {
+      background: var(--ok);
+      border-color: var(--ok);
+      color: #fff
+    }
+
+    .btn.r {
+      color: var(--bad);
+      border-color: var(--bad)
+    }
+
+    button:focus-visible,
+    select:focus-visible,
+    input:focus-visible {
+      outline: 3px solid var(--bus);
+      outline-offset: 2px
+    }
+
+    .map {
+      height: 400px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      position: relative;
+      z-index: 0
+    }
+
+    .bm {
+      background: #f2b400;
+      color: #2a2100;
+      font: 800 11px/17px sans-serif;
+      border: 1.5px solid #2a2100;
+      border-radius: 6px;
+      text-align: center;
+      width: 30px;
+      height: 20px
+    }
+
+    .stop {
+      cursor: pointer
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-top: 10px
+    }
+
+    .panel h2 {
+      margin: 0 0 4px;
+      font-size: 16px
+    }
+
+    .bus {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 0;
+      border-top: 1px solid var(--line)
+    }
+
+    .badge {
+      background: var(--bus);
+      color: #2a2100;
+      font-weight: 800;
+      border-radius: 8px;
+      padding: 4px 8px;
+      min-width: 40px;
+      text-align: center
+    }
+
+    .eta {
+      font: 800 20px "Bahnschrift", system-ui, sans-serif;
+      text-align: end
+    }
+
+    .ok {
+      color: var(--ok)
+    }
+
+    .late {
+      color: var(--late)
+    }
+
+    .bad {
+      color: var(--bad)
+    }
+
+    .st {
+      font-size: 13px;
+      font-weight: 700
+    }
+
+    .bar {
+      height: 5px;
+      background: var(--line);
+      border-radius: 3px;
+      margin-top: 4px;
+      overflow: hidden
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      background: currentColor
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      align-items: center
+    }
+
+    select,
+    input[type=text] {
+      border: 1.5px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px;
+      font: inherit
+    }
+
+    .note {
+      padding: 8px 0;
+      border-top: 1px solid var(--line)
+    }
+
+    .note small {
+      color: var(--mute)
+    }
+
+    .kpi {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px
+    }
+
+    .kpi div {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px
+    }
+
+    .kpi b {
+      display: block;
+      font: 800 22px "Bahnschrift", system-ui, sans-serif
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px
+    }
+
+    td,
+    th {
+      padding: 6px 4px;
+      text-align: start;
+      border-top: 1px solid var(--line)
+    }
+
+    nav {
+      display: flex;
+      border-top: 1px solid var(--line);
+      background: var(--card)
+    }
+
+    nav button {
+      flex: 1;
+      border: 0;
+      background: none;
+      color: var(--mute);
+      padding: 12px 4px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer
+    }
+
+    nav button[aria-selected=true] {
+      color: var(--ink);
+      box-shadow: inset 0 3px 0 var(--bus)
+    }
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      top: calc(10px + env(safe-area-inset-top, 0px));
+      transform: translate(-50%, -160%);
+      background: var(--ink);
+      color: var(--bg);
+      padding: 10px 16px;
+      border-radius: 12px;
+      max-width: 90%;
+      font-weight: 600;
+      transition: transform .3s;
+      z-index: 5
+    }
+
+    #toast.on {
+      transform: translate(-50%, 0)
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      #toast {
+        transition: none
+      }
+    }
+
+    [hidden] {
+      display: none !important
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</head>
+
+<body>
+  <header>
+    <h1>NMS</h1><small data-i="tag"></small><span class="lg"><button data-l="0">FR</button><button
+        data-l="1">عربية</button><button data-l="2">EN</button></span>
+  </header>
+  <main>
+    <section id="vu">
+      <div class="seg"><button class="chip" data-t="m" data-i="map"></button><button class="chip" data-t="h"
+          data-i="hor"></button><button class="chip" data-t="k" data-i="tk"></button><button class="chip"
+          data-t="a"><span data-i="al"></span> <span id="cnt"></span></button></div>
+      <div id="uM">
+        <div class="seg" id="chips"></div>
+        <div id="m1" class="map"></div>
+        <div class="panel">
+          <h2 id="eh"></h2>
+          <div id="eta"></div>
+        </div>
+        <div class="panel">
+          <h2 data-i="report"></h2>
+          <div class="row"><select id="rt">
+              <option value="rO" data-i="rO"></option>
+              <option value="rM" data-i="rM"></option>
+              <option value="rS" data-i="rS"></option>
+            </select><button class="btn" id="rb" data-i="send"></button></div>
+        </div>
+      </div>
+      <div id="uH" hidden>
+        <div class="sub" data-i="prog"></div>
+        <div class="seg" id="cchips" style="margin-top:8px"></div>
+        <div id="hrows"></div>
+      </div>
+      <div id="uK" hidden>
+        <div class="panel">
+          <h2 data-i="buy"></h2>
+          <div class="row"><label><input type="radio" name="pr" value="30" checked> <span data-i="t1"></span></label>
+          </div>
+          <div class="row"><label><input type="radio" name="pr" value="600"> <span data-i="t2"></span></label></div>
+          <div class="row"><select id="pm">
+              <option>CIB</option>
+              <option>Edahabia</option>
+            </select><button class="btn p" id="pay" data-i="pay"></button></div>
+          <div id="tkt"></div>
+        </div>
+        <div class="panel">
+          <h2 data-i="hist"></h2>
+          <div id="hist"></div>
+        </div>
+      </div>
+      <div id="uA" hidden>
+        <div class="panel">
+          <h2 data-i="al"></h2>
+          <div id="notes"></div>
+        </div>
+      </div>
+    </section>
+    <section id="vd" hidden>
+      <div class="panel">
+        <h2 data-i="d"></h2>
+        <div class="row"><select id="dsel"></select><button class="btn p" id="on" data-i="start"></button><button
+            class="btn" id="offb" data-i="end"></button></div>
+        <div id="dinfo" style="margin-top:8px"></div>
+      </div>
+      <div class="panel">
+        <h2 data-i="inc"></h2>
+        <div class="row"><button class="btn r" data-a="fail" data-i="pFail"></button><button class="btn" data-a="late"
+            data-i="pLate"></button><button class="btn" data-a="full" data-i="pFull"></button><button class="btn"
+            data-a="block" data-i="pBlock"></button><button class="btn p" data-a="ok" data-i="pOk"></button></div>
+      </div>
+      <div class="panel">
+        <h2 data-i="pax"></h2>
+        <div class="row"><button class="btn" id="pm1">−</button><b id="pv"></b><button class="btn" id="pp1">+</button>
+        </div>
+        <div class="row"><label><input type="checkbox" id="dof"> <span data-i="offl"></span></label></div>
+      </div>
+    </section>
+    <section id="vs" hidden>
+      <div class="kpi" id="kpi"></div>
+      <div id="m2" class="map" style="margin-top:10px"></div>
+      <div class="panel">
+        <h2 data-i="fleet"></h2>
+        <table id="fleet"></table>
+      </div>
+      <div class="panel">
+        <h2 data-i="inc"></h2>
+        <div id="incs"></div>
+      </div>
+      <div class="panel">
+        <h2 data-i="msgh"></h2>
+        <div class="row"><select id="ssel"></select><input type="text" id="mt" data-i="ph"><button class="btn" id="ms"
+            data-i="send"></button></div>
+      </div>
+    </section>
+  </main>
+  <nav role="tablist"><button role="tab" data-m="u" data-i="u"></button><button role="tab" data-m="d"
+      data-i="d"></button><button role="tab" data-m="s" data-i="s"></button></nav>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script>
+    var T = {
+      hor: ['Horaires', 'المواعيد', 'Timetable'], dep: ['Départs', 'الذهاب', 'Departures'], ret: ['Retours', 'العودة', 'Returns'], nxt: ['Prochain', 'التالي', 'Next'], nbus: ['bus', 'حافلة', 'bus'], prog: ['Programme du mercredi 23-09-2026 · DOU El Kseur (Béjaïa)', 'برنامج الأربعاء 23-09-2026 · مديرية الخدمات الجامعية القصر (بجاية)', 'Wednesday 23-09-2026 · DOU El Kseur (Béjaïa)'],
+      tag: ['Plus de souffrance dans le transport', 'لا مزيد من المعاناة في النقل', 'No more suffering on the road'],
+      u: ['Usager', 'المستخدم', 'Passenger'], d: ['Conducteur', 'السائق', 'Driver'], s: ['Superviseur', 'المشرف', 'Supervisor'],
+      map: ['Carte', 'الخريطة', 'Map'], tk: ['Billet', 'التذكرة', 'Ticket'], al: ['Alertes', 'التنبيهات', 'Alerts'],
+      line: ['Ligne', 'الخط', 'Line'], stop: ['Arrêt', 'المحطة', 'Stop'], min: ['min', 'د', 'min'], now: ['Imminent', 'وشيك', 'Due'],
+      ok: ['À l’heure', 'في الوقت', 'On time'], late: ['Retard 15 min', 'تأخر 15 د', '15 min late'], fail: ['En panne', 'معطلة', 'Broken down'], off: ['Hors service', 'خارج الخدمة', 'Off duty'],
+      free: ['Places libres', 'أماكن شاغرة', 'Seats free'], busy: ['Affluence', 'اكتظاظ', 'Busy'], full: ['Presque plein', 'شبه ممتلئة', 'Almost full'],
+      report: ['Signaler un problème', 'الإبلاغ عن مشكلة', 'Report a problem'], send: ['Envoyer', 'إرسال', 'Send'],
+      rO: ['Bus surchargé', 'حافلة مكتظة', 'Overcrowded bus'], rM: ['Arrêt manqué', 'محطة فائتة', 'Missed stop'], rS: ['Incident de sécurité', 'حادث أمني', 'Safety incident'],
+      buy: ['Acheter un titre', 'شراء تذكرة', 'Buy a pass'], t1: ['Ticket unitaire – 30 DA', 'تذكرة واحدة – 30 دج', 'Single ticket – 30 DA'], t2: ['Abonnement étudiant mensuel – 600 DA', 'اشتراك طلابي شهري – 600 دج', 'Monthly student pass – 600 DA'],
+      pay: ['Payer', 'دفع', 'Pay'], paid: ['Paiement accepté (démo). QR à valider à bord.', 'تم الدفع (تجريبي). اعرض الرمز عند الصعود.', 'Payment accepted (demo). Scan QR on board.'], hist: ['Historique', 'السجل', 'History'],
+      start: ['Démarrer le service', 'بدء الخدمة', 'Start service'], end: ['Terminer le service', 'إنهاء الخدمة', 'End service'], inc: ['Incidents', 'الحوادث', 'Incidents'],
+      pFail: ['Panne', 'عطل', 'Breakdown'], pLate: ['Retard', 'تأخر', 'Delay'], pFull: ['Bus complet', 'حافلة ممتلئة', 'Bus full'], pBlock: ['Route bloquée', 'طريق مغلق', 'Road blocked'], pOk: ['Tout va bien', 'كل شيء على ما يرام', 'All clear'],
+      pax: ['Passagers à bord', 'الركاب', 'Passengers on board'], offl: ['Simuler une coupure réseau 4G', 'محاكاة انقطاع شبكة 4G', 'Simulate 4G outage'],
+      buf: ['positions GPS en mémoire', 'مواقع GPS محفوظة', 'GPS points stored'], fleet: ['Flotte', 'الأسطول', 'Fleet'],
+      kB: ['Bus en service', 'حافلات في الخدمة', 'Buses in service'], kP: ['Ponctualité', 'الالتزام بالمواعيد', 'Punctuality'], kI: ['Incidents ouverts', 'حوادث مفتوحة', 'Open incidents'], kR: ['Recettes du jour (DA)', 'إيرادات اليوم (دج)', 'Today’s revenue (DA)'],
+      res: ['Résoudre', 'حل', 'Resolve'], msgh: ['Message au conducteur', 'رسالة إلى السائق', 'Message to driver'], ph: ['Votre consigne…', 'تعليماتك…', 'Your instruction…'],
+      sig: ['Signal', 'الإشارة', 'Signal'], lost: ['Perdu', 'مفقود', 'Lost'], good: ['OK', 'جيد', 'OK'], none: ['Aucune alerte. Vous serez prévenu en cas de retard, panne ou arrivée imminente.', 'لا توجد تنبيهات. سيتم إعلامك عند التأخر أو العطل أو قرب وصول الحافلة.', 'No alerts. You will be told about delays, breakdowns or imminent arrivals.'],
+      nNear: ['Bus {b} à 5 min de l’arrêt {s}', 'الحافلة {b} على بعد 5 د من المحطة {s}', 'Bus {b} is 5 min from {s}'],
+      nLate: ['Bus {b} : 15 min de retard (ligne {l})', 'الحافلة {b}: تأخر 15 دقيقة (الخط {l})', 'Bus {b}: 15 min late (line {l})'],
+      nFail: ['Bus {b} en panne. Prochain bus : {o} dans {e} min. SMS envoyé aux abonnés.', 'الحافلة {b} معطلة. الحافلة التالية {o} بعد {e} د. تم إرسال SMS للمشتركين.', 'Bus {b} broken down. Next bus {o} in {e} min. SMS sent to subscribers.'],
+      nBack: ['Bus {b} repart normalement', 'الحافلة {b} تستأنف السير', 'Bus {b} is moving normally'], nFull: ['Bus {b} complet', 'الحافلة {b} ممتلئة', 'Bus {b} is full'],
+      nBlock: ['Route bloquée : bus {b} dévié', 'طريق مغلق: تم تحويل الحافلة {b}', 'Road blocked: bus {b} diverted'], nMsg: ['Consigne pour {b} : {m}', 'تعليمات إلى {b}: {m}', 'Instruction for {b}: {m}'],
+      nRep: ['Signalement usager : {x}', 'بلاغ مستخدم: {x}', 'Passenger report: {x}'], nLost: ['Signal GPS perdu : bus {b}. Mémorisation locale activée.', 'فُقدت إشارة GPS: الحافلة {b}. تم تفعيل التخزين المحلي.', 'GPS lost: bus {b}. Local storage on.'],
+      nSync: ['Bus {b} : {n} positions renvoyées au serveur', 'الحافلة {b}: أُعيد إرسال {n} موقع', 'Bus {b}: {n} points re-sent to server']
+    };
+    var SN = function (f, a) { return [f, a || f] };
+    /* Coordonnées initiales APPROXIMATIVES : affinées au chargement via OpenStreetMap (Nominatim), routes via OSRM */
+    var LINES = [
+      { id: 'A', color: '#0e7c4a', stops: [[SN('Sidi Aïch'), 36.612, 4.690], [SN('Timezrit'), 36.598, 4.755], [SN('El Kseur ville'), 36.678, 4.857], [SN('Amizour'), 36.641, 4.901], [SN('Campus Aboudaou', 'حرم أبو داو'), 36.6927, 5.0922, 'Campus Aboudaou, Béjaïa']] },
+      { id: 'B', color: '#2f6fdb', stops: [[SN('Melbou'), 36.640, 5.357], [SN('Souk El Tenine'), 36.680, 5.320], [SN('Aokas'), 36.644, 5.250], [SN('Tizi Berber'), 36.640, 5.205], [SN('Campus Targa Ouzemour', 'حرم تارقة أوزمور'), 36.711, 5.058, 'Campus Targa Ouzemour, Béjaïa']] },
+      { id: 'C', color: '#b3541e', stops: [[SN('Baccaro-Tichy'), 36.685, 5.080], [SN('Ouad-Ghir'), 36.700, 5.000], [SN('Ighzer Ouzarif'), 36.690, 4.950], [SN('Campus El Kseur', 'حرم القصر'), 36.672, 4.865, 'Campus universitaire El Kseur, Béjaïa']] }];
+    var S = { lang: 0, mode: 'u', tab: 'm', sel: { l: 0, s: 1 }, rev: 0 }, N = [], INC = [], HIST = [], BUS = {}, MAPS = [], NS = 'http://www.w3.org/2000/svg', $ = function (i) { return document.getElementById(i) };
+    function t(k, p) { var s = T[k] ? T[k][S.lang] : k; for (var x in p) s = s.replace('{' + x + '}', p[x]); return s }
+    function nm(a) { return a[S.lang == 1 ? 1 : 0] }
+    function el(n, a, p) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e }
+    function clock() { return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Algiers' }) }
+    function rt(n) { var p = {}; for (var x in n.p) p[x] = Array.isArray(n.p[x]) ? nm(n.p[x]) : n.p[x]; return t(n.k, p) }
+    function note(k, p) { var n = { k: k, p: p || {}, t: clock() }; N.unshift(n); var o = $('toast'); o.textContent = rt(n); o.className = 'on'; clearTimeout(note.h); note.h = setTimeout(function () { o.className = '' }, 3500); rNotes() }
+    var LF = window.L, TF = 240;
+    function gdist(a, b) { var r = Math.PI / 180, R = 6371000, x = Math.sin((b[0] - a[0]) * r / 2), y = Math.sin((b[1] - a[1]) * r / 2), q = x * x + Math.cos(a[0] * r) * Math.cos(b[0] * r) * y * y; return 2 * R * Math.asin(Math.sqrt(q)) }
+    LINES.forEach(function (L) {
+      L.stops = L.stops.map(function (s) { return { n: s[0], p: [s[1], s[2]], q: s[3], ms: [] } });
+      L.buses = [0, 1].map(function (i) { var b = { id: L.id + (i + 1), L: L, i: i, d: 0, f: 1, pax: [41, 22][i] + (L.id == 'B' ? -6 : 0), on: true, off: false, buf: 0, n5: false }; BUS[b.id] = b; return b })
+    });
+    function geom(L, out) {
+      var loop = out.concat(out.slice(0, -1).reverse()), i, old = L.len; L.out = out; L.pts = loop; L.cum = [0]; for (i = 1; i < loop.length; i++)L.cum.push(L.cum[i - 1] + gdist(loop[i - 1], loop[i])); L.len = L.cum[L.cum.length - 1];
+      L.stops.forEach(function (s) { var best = 1e12, bi = 0; for (i = 0; i < out.length; i++) { var d = gdist(out[i], s.p); if (d < best) { best = d; bi = i } } s.d = L.cum[bi] });
+      L.buses.forEach(function (b) { b.d = (old ? b.d / old : b.i / 2 + .03) * L.len })
+    }
+    function at(L, d) { d = ((d % L.len) + L.len) % L.len; var c = L.cum, lo = 0, hi = c.length - 1, m; while (hi - lo > 1) { m = (lo + hi) >> 1; if (c[m] <= d) lo = m; else hi = m } var a = L.pts[lo], b = L.pts[hi], u = (d - c[lo]) / ((c[hi] - c[lo]) || 1); return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u] }
+    function eta(L, b, s) { return ((((s.d - b.d) % L.len) + L.len) % L.len) / L.len * TF / 6 }
+    LINES.forEach(function (L) { geom(L, L.stops.map(function (s) { return s.p })) });
+    function fit(m) { var a = []; LINES.forEach(function (L) { a = a.concat(L.out) }); m.map.fitBounds(a, { padding: [20, 20] }) }
+    function mk(el, click) {
+      var m = { g: {}, tx: [], pl: {} }, map = LF.map(el, { scrollWheelZoom: false }).setView([36.68, 5.0], 10); m.map = map;
+      LF.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
+      LINES.forEach(function (L, li) {
+        m.pl[L.id] = LF.polyline(L.out, { color: L.color, weight: 5, opacity: .85 }).addTo(map);
+        L.stops.forEach(function (s, j) { var c = LF.circleMarker(s.p, { radius: 7, color: L.color, weight: 3, fillColor: '#fff', fillOpacity: 1 }).addTo(map); c.bindTooltip(nm(s.n)); m.tx.push([c, s]); s.ms.push(c); if (click) { s.c = c; c.on('click', function () { S.sel = { l: li, s: j }; draw() }) } })
+      });
+      LINES.forEach(function (L) { L.buses.forEach(function (b) { m.g[b.id] = LF.marker(at(L, b.d), { icon: LF.divIcon({ className: '', html: '<div class="bm">' + b.id + '</div>', iconSize: [30, 20], iconAnchor: [15, 10] }), zIndexOffset: 500 }).addTo(map) }) });
+      MAPS.push(m); fit(m)
+    }
+    mk($('m1'), true); mk($('m2'), false);
+    function redraw(L) { MAPS.forEach(function (m) { m.pl[L.id].setLatLngs(L.out) }); L.stops.forEach(function (s) { s.ms.forEach(function (c) { c.setLatLng(s.p) }) }) }
+    function route(L, cb) {
+      var ps = L.stops.map(function (s) { return s.p[1] + ',' + s.p[0] }).join(';');
+      fetch('https://router.project-osrm.org/route/v1/driving/' + ps + '?overview=full&geometries=geojson').then(function (r) { return r.json() }).then(function (j) { geom(L, j.routes[0].geometry.coordinates.map(function (p) { return [p[1], p[0]] })); redraw(L); if (!route.f) { route.f = 1; MAPS.forEach(fit) } cb() }).catch(cb)
+    }
+    function geocode(s, cb) {
+      var key = 'nms_g_' + s.n[0], c = null; try { c = JSON.parse(localStorage.getItem(key)) } catch (e) { } if (c) return cb(c, false);
+      fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=dz&q=' + encodeURIComponent(s.q || s.n[0] + ', Béjaïa, Algérie')).then(function (r) { return r.json() }).then(function (j) { var ll = j[0] ? [+j[0].lat, +j[0].lon] : null; if (ll) try { localStorage.setItem(key, JSON.stringify(ll)) } catch (e) { } cb(ll, true) }).catch(function () { cb(null, true) })
+    }
+    (function run(i) {
+      var L = LINES[i]; if (!L) return; var j = 0; (function nx() {
+        var s = L.stops[j++]; if (!s) { geom(L, L.stops.map(function (x) { return x.p })); redraw(L); return route(L, function () { run(i + 1) }) }
+        geocode(s, function (ll, net) { if (ll && gdist(ll, s.p) < 25000) s.p = ll; if (net) setTimeout(nx, 1100); else nx() })
+      })()
+    })(0);
+    function stat(b) { return !b.on ? ['off', 'late'] : b.f == 0 ? ['fail', 'bad'] : b.f < 1 ? ['late', 'late'] : ['ok', 'ok'] }
+    function draw() {
+      var L = LINES[S.sel.l], s = L.stops[S.sel.s];
+      [].forEach.call($('chips').children, function (c, i) { c.setAttribute('aria-pressed', i == S.sel.l) });
+      LINES.forEach(function (M, i) { M.stops.forEach(function (x, j) { var on = i == S.sel.l && j == S.sel.s; x.c.setRadius(on ? 10 : 7); x.c.setStyle({ fillColor: on ? M.color : '#fff' }) }) });
+      $('eh').textContent = t('stop') + ' : ' + nm(s.n);
+      var h = ''; L.buses.filter(function (b) { return b.on }).sort(function (a, b) { return eta(L, a, s) - eta(L, b, s) }).forEach(function (b) {
+        var e = eta(L, b, s), st = stat(b), ld = b.pax < 25 ? ['free', 'ok'] : b.pax < 40 ? ['busy', 'late'] : ['full', 'bad'], pc = b.pax * 2;
+        h += '<div class="bus"><span class="badge">' + b.id + '</span><div><span class="st ' + st[1] + '">' + t(st[0]) + '</span><div class="sub">' + t(ld[0]) + ' (' + pc + ' %)</div><div class="bar ' + ld[1] + '"><i style="width:' + pc + '%"></i></div></div><div class="eta">' + (b.f == 0 ? '—' : e < 1 ? t('now') : Math.ceil(e) + ' ' + t('min')) + '</div></div>'
+      });
+      $('eta').innerHTML = h; rDrv(); rSup()
+    }
+    function rDrv() {
+      var b = BUS[$('dsel').value]; if (!b) return; var st = stat(b); $('pv').textContent = b.pax + ' / 50';
+      $('dinfo').innerHTML = '<span class="st ' + st[1] + '">' + b.id + ' · ' + t(st[0]) + '</span><div class="sub">' + (b.off ? '⚠ ' : '') + b.buf + ' ' + t('buf') + '</div>' + (b.msg ? '<div class="note">' + b.msg + '</div>' : '')
+    }
+    function rSup() {
+      var on = 0, ok = 0, i; for (i in BUS) { if (BUS[i].on) { on++; if (BUS[i].f == 1) ok++ } }
+      $('kpi').innerHTML = [[t('kB'), on], [t('kP'), on ? Math.round(ok / on * 100) + ' %' : '—'], [t('kI'), INC.filter(function (x) { return x.open }).length], [t('kR'), S.rev]].map(function (k) { return '<div>' + k[0] + '<b>' + k[1] + '</b></div>' }).join('');
+      var h = '<tr><th></th><th>' + t('line') + '</th><th></th><th>' + t('pax') + '</th><th>' + t('sig') + '</th></tr>';
+      for (i in BUS) { var b = BUS[i], st = stat(b); h += '<tr><td><b>' + b.id + '</b></td><td>' + b.L.id + '</td><td class="' + st[1] + '">' + t(st[0]) + '</td><td>' + b.pax + '/50</td><td class="' + (b.off ? 'bad' : 'ok') + '">' + (b.off ? t('lost') : t('good')) + '</td></tr>' }
+      $('fleet').innerHTML = h
+    }
+    const RAW = `Amizour-ville|02,07h00/09h00,13h30/15h10/16h30|01,06h50/08h50,13h00/16h30|01,07h30/09h00,14h30/16h30
+El Kseur ville|02,07h00/09h00,13h30/15h10/16h30|01,06h50/08h50,13h00/16h30|/
+Sidi Aïch-ville|02,07h00/09h00,14h00/15h00/16h30|01,06h30/09h00,13h00/16h30|02,07h00/09h00,14h30/16h30
+Timezrit|02,06h50/08h50,14h00/15h00/16h30|01,06h30/09h10,16h30|01,07h00/09h00,14h30/16h30
+Merdj Ouamene|01,06h50/08h50,14h10/16h30|01,06h30/09h00,13h00/16h30|/
+Talla Hamza|/|/|01,07h00/09h00,14h30/16h30
+Feraoun|01,06h45,16h30|01,06h20,16h30|/
+Barbacha|01,06h25,16h30|01,06h20,16h30|/
+Semaoune|01,06h45/09h15,16h30|01,06h20,16h30|/
+Fenaia|01,06h45,16h30|01,06h35,16h30|01,07h00/09h00,14h30/16h30
+Adekar|01,06h40,16h30|01,06h30,16h30|/
+Toudja|01,06h50/09h00,13h00/16h30|01,06h40/09h00,13h00/16h30|01,07h00/09h00,14h30/16h30
+Sidi Ayad|01,06h45/09h15,16h30|01,06h20,16h30|/
+Ighzer Ouzarif|02,07h10/09h00,14h10/16h30|02,07h00/08h50,13h00/16h30|01,07h00/09h00,14h30/16h30
+Sidi Ali Labhar|/|/|01,07h00/09h00,14h30/16h30
+Porte Sarasine|/|/|01,07h00/09h00,14h30/16h30
+Ighil Ouazoug|/|/|01,07h00/09h00,14h30/16h30
+Aïn Skhoun-Targa|/|/|02,07h00/09h00,14h30/16h30
+Sidi Ahmed|/|/|02,07h00/09h00,14h30/16h30
+Amtik|01,06h45,16h30|01,06h50/08h50,13h00/16h30|/
+Ouad-Ghir|02,07h20/09h00,13h00/16h30|01,06h50/08h50,13h00/16h30|01,07h00/09h00,14h30/16h30
+Baccaro-Tichy|02,07h00/09h00,14h10/16h30|01,06h50/08h50,13h00/16h30|01,07h00/09h00,14h30/16h30
+Aokas|02,07h00/08h50,14h10/16h30|01,06h50/08h50,13h00/16h30|/
+Souk El Tenine|02,07h00/09h00,14h10/16h30|02,06h50/08h50,13h00/16h30/18h10|/
+Melbou|01,07h00/09h00,14h10/16h30|01,06h50/08h50,13h00/16h30|/
+Derguina|01,07h00/09h00,14h10/16h30|01,06h25,16h30|/
+Tizi Berber|01,07h00/09h00,14h10/16h30|01,06h50/08h50,13h00/16h30|/
+Boukhlifa|01,07h00/09h00,14h10/16h30|01,06h50/08h50,13h00/16h30|/
+Sidi Boudrahem|/|/|02,07h00/09h00,14h30/16h30`;
+    const CAMPUS = [['Aboudaou', 'أبو داو'], ['Targa Ouzemour', 'تارقة أوزمور'], ['El Kseur', 'القصر']];
+    const SCHEDULE = RAW.split('\n').map((l) => {
+      const p = l.split('|');
+      return { name: p[0], c: p.slice(1).map((x) => { if (x === '/') return null; const [nb, dep, ret] = x.split(','); return { nb: +nb, dep, ret }; }) };
+    });
+
+    function nextOf(l, now) { if (!l) return null; return l.split('/').find(function (x) { var p = x.split('h'); return +p[0] * 60 + +p[1] >= now }) || null }
+    function rH() {
+      var hc = S.hc || 0, p = clock().split(':'), now = +p[0] * 60 + +p[1];
+      $('cchips').innerHTML = CAMPUS.map(function (c, i) { return '<button class="chip" data-c="' + i + '" aria-pressed="' + (i == hc) + '">' + c[S.lang == 1 ? 1 : 0] + '</button>' }).join('');
+      $('hrows').innerHTML = SCHEDULE.filter(function (r) { return r.c[hc] }).map(function (r) {
+        var x = r.c[hc], nd = nextOf(x.dep, now), nr = nextOf(x.ret, now);
+        return '<div class="panel"><div style="display:flex;justify-content:space-between"><h2>' + r.name + '</h2><span class="badge">' + x.nb + ' ' + t('nbus') + '</span></div><div>' + t('dep') + ' : ' + x.dep.replace(/\//g, ' · ') + '</div><div>' + t('ret') + ' : ' + x.ret.replace(/\//g, ' · ') + '</div><div class="ok st">' + t('nxt') + ' : ' + (nd ? t('dep') + ' ' + nd : nr ? t('ret') + ' ' + nr : '—') + '</div></div>'
+      }).join('')
+    }
+    function rNotes() { $('cnt').textContent = N.length ? '(' + N.length + ')' : ''; $('notes').innerHTML = N.length ? N.map(function (n) { return '<div class="note">' + rt(n) + '<br><small>' + n.t + '</small></div>' }).join('') : '<div class="sub">' + t('none') + '</div>' }
+    function rInc() { $('incs').innerHTML = INC.map(function (x, i) { return '<div class="note">' + (x.open ? '🔴' : '🟢') + ' <b>' + x.b + '</b> · ' + t(x.k) + ' <small>' + x.t + '</small>' + (x.open ? ' <button class="btn" data-r="' + i + '">' + t('res') + '</button>' : '') + '</div>' }).join(''); rSup() }
+    function inc(b, k) { INC.unshift({ b: b, k: k, t: clock(), open: true }); rInc() }
+    function rHist() { $('hist').innerHTML = HIST.map(function (h) { return '<div class="note">' + t(h.k) + ' · ' + h.m + '<br><small>' + h.t + '</small></div>' }).join('') }
+    function qr() {
+      var r = '<rect width="21" height="21" fill="#fff"/>', x, y; for (y = 0; y < 21; y++)for (x = 0; x < 21; x++) { if ((x < 8 && y < 8) || (x > 12 && y < 8) || (x < 8 && y > 12)) continue; if (Math.random() < .5) r += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>' }
+      [[0, 0], [14, 0], [0, 14]].forEach(function (o) { r += '<rect x="' + o[0] + '" y="' + o[1] + '" width="7" height="7"/><rect x="' + (o[0] + 1) + '" y="' + (o[1] + 1) + '" width="5" height="5" fill="#fff"/><rect x="' + (o[0] + 2) + '" y="' + (o[1] + 2) + '" width="3" height="3"/>' });
+      return '<svg viewBox="-1 -1 23 23" width="130" style="background:#fff;border-radius:8px">' + r + '</svg>'
+    }
+    function act(k) {
+      var b = BUS[$('dsel').value], L = b.L, o = L.buses[0] == b ? L.buses[1] : L.buses[0];
+      if (k == 'fail') { b.f = 0; note('nFail', { b: b.id, o: o.id, e: Math.ceil(eta(L, o, L.stops[1])) }); inc(b.id, 'pFail') }
+      if (k == 'late') { b.f = .5; note('nLate', { b: b.id, l: L.id }); inc(b.id, 'pLate') }
+      if (k == 'full') { b.pax = 50; note('nFull', { b: b.id }); inc(b.id, 'pFull') }
+      if (k == 'block') { note('nBlock', { b: b.id }); inc(b.id, 'pBlock') }
+      if (k == 'ok') { b.f = 1; note('nBack', { b: b.id }) } draw()
+    }
+    function opts() { ['dsel', 'ssel'].forEach(function (i) { var v = $(i).value; $(i).innerHTML = Object.keys(BUS).map(function (k) { return '<option>' + k + '</option>' }).join(''); if (v) $(i).value = v }) }
+    function lang(n) {
+      S.lang = n; var h = document.documentElement; h.lang = ['fr', 'ar', 'en'][n]; h.dir = n == 1 ? 'rtl' : 'ltr';
+      [].forEach.call(document.querySelectorAll('[data-i]'), function (e) { var k = e.getAttribute('data-i'); if (e.tagName == 'INPUT') e.placeholder = t(k); else e.textContent = t(k) });
+      [].forEach.call(document.querySelectorAll('.lg button'), function (b) { b.setAttribute('aria-pressed', b.dataset.l == n) });
+      $('chips').innerHTML = ''; LINES.forEach(function (L, i) { var b = document.createElement('button'); b.className = 'chip'; b.textContent = t('line') + ' ' + L.id; b.onclick = function () { S.sel = { l: i, s: Math.min(S.sel.s, L.stops.length - 1) }; draw() }; $('chips').appendChild(b) });
+      MAPS.forEach(function (m) { m.tx.forEach(function (a) { a[0].setTooltipContent(nm(a[1].n)) }) }); rNotes(); rHist(); rInc(); rH(); draw()
+    }
+    function show() {
+      setTimeout(function () { MAPS.forEach(function (m) { m.map.invalidateSize() }) }, 60);['u', 'd', 's'].forEach(function (m) { $('v' + m).hidden = S.mode != m });[].forEach.call(document.querySelectorAll('nav button'), function (b) { b.setAttribute('aria-selected', b.dataset.m == S.mode) });
+      ['m', 'h', 'k', 'a'].forEach(function (x) { $('u' + x.toUpperCase()).hidden = S.tab != x });[].forEach.call(document.querySelectorAll('[data-t]'), function (b) { b.setAttribute('aria-pressed', b.dataset.t == S.tab) })
+    }
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.c) { S.hc = +b.dataset.c; rH() } if (b.dataset.l) lang(+b.dataset.l); if (b.dataset.m) { S.mode = b.dataset.m; show() } if (b.dataset.t) { S.tab = b.dataset.t; show() } if (b.dataset.a) act(b.dataset.a);
+      if (b.dataset.r) { INC[+b.dataset.r].open = false; rInc() }
+    });
+    $('rb').onclick = function () { var k = $('rt').value; inc('👤', k); note('nRep', { x: t(k) }) };
+    $('pay').onclick = function () { var pr = +document.querySelector('input[name=pr]:checked').value, m = $('pm').value; S.rev += pr; var k = pr == 30 ? 't1' : 't2'; HIST.unshift({ k: k, m: m + ' · ' + pr + ' DA', t: clock() }); $('tkt').innerHTML = '<div class="row">' + qr() + '<div><b class="ok">' + t('paid') + '</b><div class="sub">' + m + ' · ' + pr + ' DA</div></div></div>'; rHist(); rSup() };
+    $('on').onclick = function () { BUS[$('dsel').value].on = true; draw() }; $('offb').onclick = function () { BUS[$('dsel').value].on = false; draw() };
+    $('pm1').onclick = function () { var b = BUS[$('dsel').value]; b.pax = Math.max(0, b.pax - 1); draw() }; $('pp1').onclick = function () { var b = BUS[$('dsel').value]; b.pax = Math.min(50, b.pax + 1); draw() };
+    $('dsel').onchange = rDrv;
+    $('dof').onchange = function () { var b = BUS[$('dsel').value]; b.off = this.checked; if (b.off) note('nLost', { b: b.id }); else { note('nSync', { b: b.id, n: b.buf }); b.buf = 0 } draw() };
+    $('ms').onclick = function () { var b = BUS[$('ssel').value], m = $('mt').value.trim(); if (!m) return; b.msg = m; $('mt').value = ''; note('nMsg', { b: b.id, m: m }); draw() };
+    var last = performance.now(), tk = 0;
+    setInterval(function () {
+      var n = performance.now(), dt = (n - last) / 1000; last = n; tk++;
+      LINES.forEach(function (L, li) {
+        L.buses.forEach(function (b) {
+          if (b.on) b.d = (b.d + L.len / TF * b.f * dt) % L.len; if (b.on && b.off && tk % 2 == 0) b.buf++; var p = at(L, b.d); MAPS.forEach(function (m) { m.g[b.id].setLatLng(p); m.g[b.id].setOpacity(b.on ? (b.f == 0 ? .5 : 1) : .25) });
+          if (li == S.sel.l && b.on) { var e = eta(L, b, L.stops[S.sel.s]); if (e <= 5 && e > 4 && b.f > 0 && !b.n5) { b.n5 = true; note('nNear', { b: b.id, s: L.stops[S.sel.s].n }) } if (e > 5) b.n5 = false }
+        })
+      }); draw()
+    }, 400);
+    opts(); lang(0); show();
+  </script>
+</body>
+
+</html>
